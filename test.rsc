@@ -20,18 +20,18 @@
 # ----------------------------------------------------------------------
 #	Variables
 # ----------------------------------------------------------------------
-:local wanWifiSsid        "ssid";
-:local wanWifiPass        "1234";
-:local wanEthernet        "ether1";
 :local wanWifi            "WiFi5G";
+:local wanWifiSsid        "ssid";
+:local wanWifiPass        "12345678";
+:local wanEthernet        "ether1";
 
 :local lanMxWifiSsid      "ssid";
-:local lanMxWifiPass      "1234";
+:local lanMxWifiPass      "1234567890";
 :local lanMxSrc            "192.168.50.0/24";
 :local lanMxdns            "8.8.8.8";
 
 :local lanUsWifiSsid      "ssid";
-:local lanUsWifiPass      "1234";
+:local lanUsWifiPass      "1234567890";
 :local lanUsSrc           "192.168.60.0/24";
 :local lanUsdns            "8.8.8.8";
 
@@ -65,6 +65,7 @@
 :local lanMxusable  (($lanMxlast - $lanMxnet) + ($lanMxprfix / 31))
 
 :put ""
+:put "Configuracion Lan Mexico"
 :put "       Source: $lanMxsrc"
 :put "           IP: $lanMxip"
 :put "Subnet Prefix: $lanMxprfix"
@@ -91,6 +92,7 @@
 :local lanUsusable  (($lanUslast - $lanUsnet) + ($lanUsprfix / 31))
 
 :put ""
+:put "Configuracion Lan USA"
 :put "       Source: $lanUssrc"
 :put "           IP: $lanUsip"
 :put "Subnet Prefix: $lanUsprfix"
@@ -105,26 +107,6 @@
 :put "     Last* IP: $lanUslast"
 
 
-# ----------------------------------------------------------------------
-#	General configuration
-# ----------------------------------------------------------------------
-/system identity
-set name=$routerName
-/system clock
-set time-zone-name=$routerTz
-/tool mac-server
-set allowed-interface-list=all
-/tool mac-server mac-winbox
-set allowed-interface-list=all
-/snmp set enabled=$snmpEnabled
-#/snmp community set name=$snmpCommunity 0
-#/snmp set contact=$snmpContact
-#/snmp set location=$snmpLocation
-# /ip neighbor discovery-settings
-# set discover-interface-list=static
-
-:put "-> General configuration completed"
-
 # ------------------------------------------------------------------
 #	Interface configuration
 # ------------------------------------------------------------------
@@ -133,42 +115,17 @@ set allowed-interface-list=all
 /interface list
 add name=WAN
 add name=LANMX
-#add name=LANUS
+add name=LANUS
 /interface bridge
 add name=bridgemx
-#add name=bridgeus
+add name=bridgeus
 /interface list member
 #add list=WAN interface=ether1
 add list=WAN interface=WiFi5G
 add list=LANMX interface=bridgemx
-#add list=LANUS interface=bridgeus
+add list=LANUS interface=bridgeus
 
 :put "-> Interface configuration completed"
-
-
-# ------------------------------------------------------------------
-#	IP / DHCP configuration
-# ------------------------------------------------------------------
-/ip dhcp-client
-#add interface=$wanEthernet disabled=no
-add interface=$wanWifi disabled=no
-/ip pool
-add name=dchp-pool-mx ranges=($lanMxfirst."-".$lanMxlast);
-#add name=dchp-pool-us ranges=($lanUsfirst."-".$lanUslast);
-/ip address
-add interface=bridgemx address=$lanMxrouter network=$lanMxnet
-#add interface=bridgeus address=$lanUsrouter network=$lanUsnet
-/ip dhcp-server
-add name=dhcp-server-mx interface=bridgemx address-pool=dchp-pool-mx disabled=no
-#add name=dhcp-server-us interface=bridgeus address-pool=dchp-pool-us disabled=no
-/ip dhcp-server network
-add address=($lanMxnet."/".$lanMxprfix) netmask=$lanMxprfix gateway=$lanMxrouter dns-server=$lanMxdns
-#add address=($lanUsnet."/".$lanUsprfix) netmask=$lanUsprfix gateway=$lanUsrouter dns-server=$lanUsdns
-/ip dns static
-add address=$lanMxrouter name=routermx.local
-#add address=$lanUsrouter name=routerus.local
-
-:put "-> IP / DHCP configuration completed"
 
 
 # ------------------------------------------------------------------
@@ -176,11 +133,11 @@ add address=$lanMxrouter name=routermx.local
 # ------------------------------------------------------------------
 /interface wireless security-profiles
 add name=WanWifiPass authentication-types=wpa2-psk mode=dynamic-keys wpa2-pre-shared-key=$wanWifiPass
-add name=MxWifiPass authentication-types=wpa2-psk mode=dynamic-keys wpa2-pre-shared-key=$lanMxWifiPass
-add name=UsWifiPass authentication-types=wpa2-psk mode=dynamic-keys wpa2-pre-shared-key=$lanUsWifiPass
+#add name=MxWifiPass authentication-types=wpa2-psk mode=dynamic-keys wpa2-pre-shared-key=$lanMxWifiPass
+#add name=UsWifiPass authentication-types=wpa2-psk mode=dynamic-keys wpa2-pre-shared-key=$lanUsWifiPass
 /interface wireless
-set [ find name=WiFi2G ] mode=station-pseudobridge disabled=no ssid=$wanWifiSsid security-profile=WanWifiPass hide-ssid=no wps-mode=disabled country=mexico distance=indoors installation=indoor antenna-gain=2 frequency=auto band=2ghz-b/g/n channel-width=20/40mhz-XX
-set [ find name=WiFi5G ] mode=station-pseudobridge disabled=no ssid=$wanWifiSsid security-profile=WanWifiPass hide-ssid=no wps-mode=disabled country=etsi distance=indoors installation=indoor antenna-gain=3 frequency=auto band=5ghz-a/n/ac channel-width=20/40/80mhz-XXXX
+#set [ find name=WiFi2G ] mode=station-bridge disabled=no ssid=$wanWifiSsid security-profile=WanWifiPass hide-ssid=no wps-mode=disabled country=mexico distance=indoors installation=indoor antenna-gain=2 frequency=auto band=2ghz-b/g/n channel-width=20/40mhz-XX
+set [ find name=WiFi5G ] mode=station disabled=no ssid=$wanWifiSsid security-profile=WanWifiPass hide-ssid=no wps-mode=disabled country=mexico distance=indoors installation=indoor antenna-gain=3 frequency=auto band=5ghz-a/n/ac channel-width=20/40/80mhz-XXXX
 #add mode=ap-bridge master-interface=WiFi2G ssid=$lanMxWifiSsid security-profile=MxWifiPass
 #add mode=ap-bridge master-interface=WiFi5G ssid=$lanMxWifiSsid security-profile=MxWifiPass
 #add mode=ap-bridge master-interface=WiFi2G ssid=$lanUsWifiSsid security-profile=UsWifiPass
@@ -193,6 +150,31 @@ set [ find name=WiFi5G ] mode=station-pseudobridge disabled=no ssid=$wanWifiSsid
 
 
 # ------------------------------------------------------------------
+#	IP / DHCP configuration
+# ------------------------------------------------------------------
+/ip dhcp-client
+add interface=$wanEthernet disabled=no
+add interface=$wanWifi disabled=no
+/ip pool
+add name=dchp-pool-mx ranges=($lanMxfirst."-".$lanMxlast);
+add name=dchp-pool-us ranges=($lanUsfirst."-".$lanUslast);
+/ip address
+add interface=bridgemx address=($lanMxrouter."/".$lanMxprfix) network=$lanMxnet
+add interface=bridgeus address=($lanUsrouter."/".$lanMxprfix) network=$lanUsnet
+/ip dhcp-server
+add name=dhcp-server-mx interface=bridgemx address-pool=dchp-pool-mx disabled=no
+add name=dhcp-server-us interface=bridgeus address-pool=dchp-pool-us disabled=no
+/ip dhcp-server network
+add address=($lanMxnet."/".$lanMxprfix) netmask=$lanMxprfix gateway=$lanMxrouter dns-server=$lanMxdns
+add address=($lanUsnet."/".$lanUsprfix) netmask=$lanUsprfix gateway=$lanUsrouter dns-server=$lanUsdns
+/ip dns static
+add address=$lanMxrouter name=routermx.local
+add address=$lanUsrouter name=routerus.local
+
+:put "-> IP / DHCP configuration completed"
+
+
+# ------------------------------------------------------------------
 #	firewall Configuration
 # ------------------------------------------------------------------
 /ip firewall nat add chain=srcnat out-interface-list=WAN ipsec-policy=out,none action=masquerade comment="defconf: masquerade"
@@ -202,12 +184,14 @@ filter add chain=input disabled=no action=drop connection-state=invalid comment=
 filter add chain=input disabled=no action=accept protocol=icmp comment="defconf: accept ICMP"
 filter add chain=input disabled=no action=accept dst-address=127.0.0.1 comment="defconf: accept to local loopback (for CAPsMAN)"
 filter add chain=input disabled=yes  action=drop in-interface-list=!LANMX comment="defconf: drop all not coming from LAN"
+filter add chain=forward action=drop connection-state=invalid comment="defconf: drop invalid"
+filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface-list=WAN comment="defconf: drop all from WAN not DSTNATed"
+filter add chain=forward action=drop src-address=192.168.50.0/24 dst-address=192.168.60.0/24 log=no log-prefix=""
+filter add chain=forward action=drop src-address=192.168.60.0/24 dst-address=192.168.50.0/24 log=no log-prefix=""
 filter add chain=forward action=accept ipsec-policy=in,ipsec comment="defconf: accept in ipsec policy"
 filter add chain=forward action=accept ipsec-policy=out,ipsec comment="defconf: accept out ipsec policy"
 filter add chain=forward action=fasttrack-connection connection-state=established,related comment="defconf: fasttrack"
 filter add chain=forward action=accept connection-state=established,related,untracked comment="defconf: accept established,related, untracked"
-filter add chain=forward action=drop connection-state=invalid comment="defconf: drop invalid"
-filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface-list=WAN comment="defconf: drop all from WAN not DSTNATed"
 }
 
 :put "-> Firewall configuration completed"
@@ -219,14 +203,13 @@ filter add chain=forward action=drop connection-state=new connection-nat-state=!
 /interface bridge port
 add bridge=bridgemx interface=ether2
 add bridge=bridgemx interface=ether3
-#add bridge=bridgeus interface=ether4
-#add bridge=bridgeus interface=ether5
+add bridge=bridgeus interface=ether4
+add bridge=bridgeus interface=ether5
 # add bridge=bridge interface=wlan2G
 # add bridge=bridge interface=wlan5G
 
 :put "-> Bridge configuration completed"
 
 
-
-
 # https://support.nordvpn.com/hc/enUs/articles/20398642652561-MikroTik-IKEv2-setup-withNordVPN
+
